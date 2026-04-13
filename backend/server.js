@@ -66,6 +66,14 @@ app.get("/api/products/category/:cat", cacheMiddleware, async (req, res) => {
   res.json({ source: "database", data: products });
 });
 
+// GET search products (with cache)
+app.get("/api/products/search", cacheMiddleware, async (req, res) => {
+  const query = req.query.q || "";
+  const products = await Product.find({ name: { $regex: query, $options: "i" } });
+  if (res.setCache) await res.setCache(products);
+  res.json({ source: "database", data: products });
+});
+
 // GET single product by ID (with cache)
 app.get("/api/products/:id", cacheMiddleware, async (req, res) => {
   const product = await Product.findById(req.params.id);
