@@ -80,7 +80,10 @@ app.post("/api/products", async (req, res) => {
   await product.save();
   // Invalidate all product-related cache keys
   const keys = await redisClient.keys("cache:/api/products*");
-  if (keys.length) await redisClient.del(keys);
+  if (keys.length) {
+    await redisClient.del(keys);
+    console.log(`[CACHE INVALIDATE] Removed ${keys.length} keys after POST`);
+  }
   res.status(201).json({ message: "Product created", data: product });
 });
 
@@ -88,7 +91,10 @@ app.post("/api/products", async (req, res) => {
 app.delete("/api/products/:id", async (req, res) => {
   await Product.findByIdAndDelete(req.params.id);
   const keys = await redisClient.keys("cache:/api/products*");
-  if (keys.length) await redisClient.del(keys);
+  if (keys.length) {
+    await redisClient.del(keys);
+    console.log(`[CACHE INVALIDATE] Removed ${keys.length} keys after DELETE`);
+  }
   res.json({ message: "Product deleted" });
 });
 

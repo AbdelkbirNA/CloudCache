@@ -115,6 +115,44 @@
     .badge.cache { background: #10b98120; color: var(--green); }
     .badge.db    { background: #6366f120; color: var(--primary); }
 
+    .product-actions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-delete {
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+      padding: 4px 10px;
+      font-size: 0.7rem;
+    }
+    .btn-delete:hover {
+      background: var(--red);
+      color: white;
+    }
+
+    /* Add Form */
+    .add-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .add-form input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .add-form button {
+      grid-column: span 2;
+    }
+
     .response-bar {
       display: flex; align-items: center; gap: 0.5rem;
       font-size: 0.8rem; color: var(--muted); margin-top: 0.8rem;
@@ -170,6 +208,14 @@
           Last response: <span class="timing" id="lastTiming">—</span> ms &nbsp;|&nbsp;
           Source: <span id="lastSource">—</span>
         </div>
+
+        <div class="add-form">
+          <input type="text" id="pName" placeholder="Name (ex: iPhone 15)">
+          <input type="number" id="pPrice" placeholder="Price ($)">
+          <input type="text" id="pCategory" placeholder="Category">
+          <input type="number" id="pStock" placeholder="Stock">
+          <button onclick="addProduct()" class="primary">➕ Add New Product</button>
+        </div>
       </div>
     </div>
 
@@ -209,9 +255,13 @@
 </main>
 
 <script>
-  const API = window.location.hostname === 'localhost'
+  // Detect API URL
+  // 1. If we are on port 3000 (Docker Frontend), API is on port 5000
+  // 2. If we are on port 5000 (Same Origin), use relative path
+  // 3. If we are on file://, use localhost:5000
+  const API = (window.location.port === '3000' || window.location.protocol === 'file:')
     ? 'http://localhost:5000'
-    : '';  // same origin when deployed
+    : ''; 
 
   function log(msg, type = 'info') {
     const area = document.getElementById('logArea');
@@ -278,8 +328,43 @@
         <div class="price">$${p.price}</div>
         <div class="meta">Category: ${p.category} | Stock: ${p.stock}</div>
         <span class="badge ${source === 'cache' ? 'cache' : 'db'}">${source === 'cache' ? '⚡ FROM CACHE' : '🗄️ FROM DB'}</span>
+        <div class="product-actions">
+           <button class="btn-delete" onclick="deleteProduct('${p._id}')">🗑️ Delete</button>
+        </div>
       </div>
     `).join('');
+  }
+
+  async function addProduct() {
+     const name = document.getElementById('pName').value;
+     const price = document.getElementById('pPrice').value;
+     const category = document.getElementById('pCategory').value;
+     const stock = document.getElementById('pStock').value;
+     if(!name || !price) return alert('Name and Price are required');
+
+     try {
+       const res = await fetch(`${API}/api/products`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ name, price, category, stock })
+       });
+       const data = await res.json();
+       log(`Product created: ${name} (Cache Invalidated)`, 'hit');
+       fetchProducts();
+     } catch (e) {
+       log('Add failed: ' + e.message, 'err');
+     }
+  }
+
+  async function deleteProduct(id) {
+    if(!confirm('Delete this product? (This will invalidate the cache)')) return;
+    try {
+      await fetch(`${API}/api/products/${id}`, { method: 'DELETE' });
+      log('Product deleted (Cache Invalidated)', 'err');
+      fetchProducts();
+    } catch (e) {
+      log('Delete failed: ' + e.message, 'err');
+    }
   }
 
   async function seedDB() {
