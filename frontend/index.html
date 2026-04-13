@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CacheDemo — Distributed Cache System</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --card: #22263a;
+      --border: #2e3350;
+      --primary: #6366f1;
+      --accent: #22d3ee;
+      --green: #10b981;
+      --red: #f43f5e;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+    header span { color: var(--muted); font-size: 0.85rem; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); margin-left: auto; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem; display: grid; gap: 1.5rem; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+    }
+    .stat-card .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+    .stat-card .value { font-size: 2rem; font-weight: 700; }
+    .stat-card .value.green { color: var(--green); }
+    .stat-card .value.blue { color: var(--accent); }
+    .stat-card .value.purple { color: var(--primary); }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: var(--surface);
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .panel-body { padding: 1.5rem; }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    button {
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    button:hover { background: var(--primary); border-color: var(--primary); }
+    button.primary { background: var(--primary); border-color: var(--primary); font-weight: 600; }
+    button.danger { background: var(--red); border-color: var(--red); }
+    button.success { background: var(--green); border-color: var(--green); }
+
+    .log-area {
+      background: #0a0c14;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+    .log-line { padding: 2px 0; border-bottom: 1px solid #1a1d2e; }
+    .log-line.hit { color: var(--green); }
+    .log-line.miss { color: #f59e0b; }
+    .log-line.info { color: var(--accent); }
+    .log-line.err  { color: var(--red); }
+
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .product-card h3 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .product-card .price { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    .product-card .meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 0.4rem;
+    }
+    .badge.cache { background: #10b98120; color: var(--green); }
+    .badge.db    { background: #6366f120; color: var(--primary); }
+
+    .response-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8rem; color: var(--muted); margin-top: 0.8rem;
+    }
+    .timing { font-weight: 700; color: var(--text); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } .stats-row { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ CacheDemo</h1>
+  <span>Distributed Cache System — Cloud Computing Project</span>
+  <div class="status-dot" id="statusDot"></div>
+</header>
+
+<main>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="label">Cache Hits</div>
+      <div class="value green" id="statHits">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Cache Misses</div>
+      <div class="value blue" id="statMisses">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Hit Rate</div>
+      <div class="value purple" id="statRate">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Active Keys</div>
+      <div class="value" id="statKeys">—</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header">🗄️ Data Actions</div>
+      <div class="panel-body">
+        <div class="btn-row">
+          <button onclick="seedDB()" class="success">Seed Database</button>
+          <button onclick="fetchProducts()">GET All Products</button>
+          <button onclick="fetchCategory('electronics')">GET Electronics</button>
+          <button onclick="fetchCategory('furniture')">GET Furniture</button>
+        </div>
+        <div class="response-bar">
+          Last response: <span class="timing" id="lastTiming">—</span> ms &nbsp;|&nbsp;
+          Source: <span id="lastSource">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">🧹 Cache Controls</div>
+      <div class="panel-body">
+        <div class="btn-row">
+          <button onclick="loadStats()" class="primary">Refresh Stats</button>
+          <button onclick="flushCache()" class="danger">Flush Cache</button>
+        </div>
+        <p style="font-size:0.8rem; color:var(--muted); margin-top:0.8rem;">
+          TTL: 60 seconds per key. After flushing, the next request will re-populate the cache from MongoDB.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log + Products -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header">📋 Request Log</div>
+      <div class="panel-body">
+        <div class="log-area" id="logArea"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">📦 Products</div>
+      <div class="panel-body">
+        <div class="products-grid" id="productsGrid">
+          <p style="color:var(--muted); font-size:0.85rem;">Click "GET All Products" to load data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const API = window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : '';  // same origin when deployed
+
+  function log(msg, type = 'info') {
+    const area = document.getElementById('logArea');
+    const line = document.createElement('div');
+    line.className = `log-line ${type}`;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    area.prepend(line);
+  }
+
+  async function loadStats() {
+    try {
+      const res = await fetch(`${API}/api/cache/stats`);
+      const data = await res.json();
+      document.getElementById('statHits').textContent = data.hits;
+      document.getElementById('statMisses').textContent = data.misses;
+      document.getElementById('statRate').textContent = data.hitRate;
+      document.getElementById('statKeys').textContent = data.activeKeys;
+      log(`Stats refreshed — Hit rate: ${data.hitRate}`, 'info');
+    } catch (e) {
+      log('Could not load stats: ' + e.message, 'err');
+    }
+  }
+
+  async function fetchProducts() {
+    const t0 = performance.now();
+    try {
+      const res = await fetch(`${API}/api/products`);
+      const json = await res.json();
+      const ms = (performance.now() - t0).toFixed(1);
+      document.getElementById('lastTiming').textContent = ms;
+      document.getElementById('lastSource').textContent = json.source.toUpperCase();
+      const type = json.source === 'cache' ? 'hit' : 'miss';
+      log(`GET /api/products → ${json.source.toUpperCase()} (${ms}ms)`, type);
+      renderProducts(json.data, json.source);
+      loadStats();
+    } catch (e) {
+      log('Request failed: ' + e.message, 'err');
+    }
+  }
+
+  async function fetchCategory(cat) {
+    const t0 = performance.now();
+    try {
+      const res = await fetch(`${API}/api/products/category/${cat}`);
+      const json = await res.json();
+      const ms = (performance.now() - t0).toFixed(1);
+      document.getElementById('lastTiming').textContent = ms;
+      document.getElementById('lastSource').textContent = json.source.toUpperCase();
+      const type = json.source === 'cache' ? 'hit' : 'miss';
+      log(`GET /api/products/category/${cat} → ${json.source.toUpperCase()} (${ms}ms)`, type);
+      renderProducts(json.data, json.source);
+      loadStats();
+    } catch (e) {
+      log('Request failed: ' + e.message, 'err');
+    }
+  }
+
+  function renderProducts(products, source) {
+    const grid = document.getElementById('productsGrid');
+    if (!products.length) { grid.innerHTML = '<p style="color:var(--muted)">No products found.</p>'; return; }
+    grid.innerHTML = products.map(p => `
+      <div class="product-card">
+        <h3>${p.name}</h3>
+        <div class="price">$${p.price}</div>
+        <div class="meta">Category: ${p.category} | Stock: ${p.stock}</div>
+        <span class="badge ${source === 'cache' ? 'cache' : 'db'}">${source === 'cache' ? '⚡ FROM CACHE' : '🗄️ FROM DB'}</span>
+      </div>
+    `).join('');
+  }
+
+  async function seedDB() {
+    try {
+      const res = await fetch(`${API}/api/seed`, { method: 'POST' });
+      const data = await res.json();
+      log(data.message, 'info');
+    } catch (e) {
+      log('Seed failed: ' + e.message, 'err');
+    }
+  }
+
+  async function flushCache() {
+    try {
+      await fetch(`${API}/api/cache/flush`, { method: 'DELETE' });
+      log('Cache flushed — next requests will hit the database', 'err');
+      loadStats();
+    } catch (e) {
+      log('Flush failed: ' + e.message, 'err');
+    }
+  }
+
+  // Init
+  loadStats();
+  log('Dashboard ready. Click "Seed Database" to start.', 'info');
+</script>
+</body>
+</html>
