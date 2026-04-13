@@ -1,0 +1,11 @@
+{
+  "name": "cache-frontend",
+  "version": "1.0.0",
+  "description": "Distributed cache system frontend",
+  "scripts": {
+    "start": "live-server ."
+  },
+  "dependencies": {
+    "live-server": "^1.2.2"
+  }
+}

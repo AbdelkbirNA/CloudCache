@@ -1,9 +1,7 @@
-FROM nginx:alpine
-
-# Copy the static files to the nginx default serve directory
-COPY . /usr/share/nginx/html/
-
-# Expose port 80
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 8080
+CMD ["npm", "start"]
