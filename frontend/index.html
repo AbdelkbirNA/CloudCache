@@ -3,383 +3,444 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CacheMaster Pro — Systems Intelligence Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <title>CacheDemo - Distributed Cache System</title>
   <style>
     :root {
-      --bg: #05060a;
-      --panel: #0d0f1a;
-      --border: rgba(255,255,255,0.08);
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --card: #22263a;
+      --border: #2e3350;
       --primary: #6366f1;
       --accent: #22d3ee;
-      --success: #10b981;
-      --danger: #ef4444;
-      --text: #f8fafc;
+      --green: #10b981;
+      --red: #f43f5e;
+      --text: #e2e8f0;
       --muted: #64748b;
-      --font-main: 'Outfit', sans-serif;
-      --font-ui: 'Inter', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --font: "Segoe UI", system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: var(--font-ui);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: var(--font);
       min-height: 100vh;
-      overflow-x: hidden;
-      padding-bottom: 5rem;
     }
 
-    /* Shared Components */
-    .glass { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
-
-    /* Top Navigation / Branding */
     header {
-      width: 100%;
-      max-width: 1200px;
-      padding: 2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 1rem;
     }
-    .brand { display: flex; align-items: center; gap: 0.75rem; }
-    .logo { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 8px; }
-    .brand h1 { font-family: var(--font-main); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
-    .status-badge { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--success); text-transform: uppercase; background: rgba(16, 185, 129, 0.1); padding: 0.4rem 0.8rem; border-radius: 30px; }
 
-    /* Stats Overview */
-    .stats-grid {
-      width: 100%;
-      max-width: 1200px;
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    header span {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      margin-left: auto;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .stats-row {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-      margin-top: 1rem;
-      padding: 0 2rem;
-    }
-    .stat-card { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
-    .stat-card .label { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-    .stat-card .value { font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; }
-    .stat-card .value.accent { color: var(--accent); }
-
-    /* Performance Engine (The Chart Section) */
-    .engine-panel {
-      width: calc(100% - 4rem);
-      max-width: 1160px;
-      margin: 2rem 2rem 0 2rem;
-      padding: 2rem;
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 2rem;
-      position: relative;
+      gap: 1rem;
     }
 
-    .chart-container { height: 320px; position: relative; }
-
-    .insight-overlay {
-      background: rgba(0,0,0,0.2);
+    .stat-card {
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
+      border-radius: 12px;
+      padding: 1.2rem;
     }
-    .insight-item { display: flex; flex-direction: column; gap: 0.25rem; }
-    .insight-item label { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .insight-item .main-val { font-family: var(--font-mono); font-size: 2rem; font-weight: 700; line-height: 1; }
-    .insight-item .sub-val { font-size: 0.75rem; font-weight: 600; }
-    .insight-item .sub-val.up { color: var(--success); }
 
-    .source-pill {
+    .stat-card .label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .stat-card .value.green { color: var(--green); }
+    .stat-card .value.blue { color: var(--accent); }
+    .stat-card .value.purple { color: var(--primary); }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      background: var(--surface);
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-body {
+      padding: 1.5rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    button {
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    button:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    button.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    button.danger {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    button.success {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .log-area {
+      background: #0a0c14;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: "Courier New", monospace;
+      font-size: 0.82rem;
+      height: 220px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+
+    .log-line {
+      padding: 2px 0;
+      border-bottom: 1px solid #1a1d2e;
+    }
+
+    .log-line.hit { color: var(--green); }
+    .log-line.miss { color: #f59e0b; }
+    .log-line.info { color: var(--accent); }
+    .log-line.err { color: var(--red); }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .product-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .product-card .price {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .product-card .meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 0.4rem;
+    }
+
+    .badge.cache {
+      background: #10b98120;
+      color: var(--green);
+    }
+
+    .badge.db {
+      background: #6366f120;
+      color: var(--primary);
+    }
+
+    .response-bar {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.8rem;
+    }
+
+    .timing {
       font-weight: 700;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-    }
-    .source-pill.cache { background: rgba(34, 211, 238, 0.1); color: var(--accent); }
-    .source-pill.db { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
-
-    /* Action Suite */
-    .action-suite {
-      width: 100%;
-      max-width: 1200px;
-      padding: 2rem 2rem 0 2rem;
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    .action-suite button {
-      all: unset;
-      padding: 0.75rem 1.25rem;
-      border-radius: 10px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s;
-    }
-    .action-suite button:hover { background: #1a1c2e; border-color: var(--muted); transform: translateY(-2px); }
-    .action-suite button.primary { background: var(--primary); color: white; border: none; }
-    .action-suite button.primary:hover { box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4); }
-    .action-suite input {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.75rem 1.25rem;
-      color: white;
-      font-size: 0.85rem;
-      flex: 1;
+      color: var(--text);
     }
 
-    /* Bottom Grid (Results + Log) */
-    .results-grid {
-      width: 100%;
-      max-width: 1200px;
-      margin-top: 2rem;
-      padding: 0 2rem;
+    .two-col {
       display: grid;
-      grid-template-columns: 1fr 400px;
-      gap: 2rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
     }
 
-    .data-feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-    .product-card { padding: 1.25rem; transition: transform 0.3s; }
-    .product-card:hover { transform: scale(1.02); background: rgba(255,255,255,0.02); }
-    .product-card h3 { font-size: 0.95rem; margin-bottom: 0.75rem; }
-    .product-card .price { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
-    .product-card .meta { font-size: 0.75rem; color: var(--muted); }
+    @media (max-width: 700px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
 
-    .terminal {
-      background: #000;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      height: 480px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 0.5rem;
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
     }
-    .terminal-line { padding: 0.5rem; border-radius: 4px; border-left: 2px solid var(--border); }
-    .terminal-line.hit { border-color: var(--success); color: var(--success); background: rgba(16, 185, 129, 0.05); }
-    .terminal-line.miss { border-color: var(--primary); color: var(--primary); background: rgba(99, 102, 241, 0.05); }
-
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
   </style>
 </head>
 <body>
-
   <header>
-    <div class="brand">
-      <div class="logo"></div>
-      <h1>CacheMaster Pro</h1>
-    </div>
-    <div class="status-badge">
-      <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block;"></span>
-      Infrastructure Ready
-    </div>
+    <h1>CacheDemo</h1>
+    <span>Distributed Cache System - Cloud Computing Project</span>
+    <div class="status-dot" id="statusDot"></div>
   </header>
 
-  <div class="stats-grid">
-    <div class="stat-card glass">
-      <span class="label">Cache Hit Rate</span>
-      <span class="value accent" id="statRate">0%</span>
-    </div>
-    <div class="stat-card glass">
-      <span class="label">Total Intelligence Hits</span>
-      <span class="value" id="statHits">0</span>
-    </div>
-    <div class="stat-card glass">
-      <span class="label">Cold Misses</span>
-      <span class="value" id="statMisses">0</span>
-    </div>
-    <div class="stat-card glass">
-      <span class="label">Active Keyspaces</span>
-      <span class="value" id="statKeys">0</span>
-    </div>
-  </div>
-
-  <div class="engine-panel glass">
-    <div class="chart-container">
-      <canvas id="perfChart"></canvas>
-    </div>
-    <div class="insight-overlay">
-      <div class="insight-item">
-        <label>Time to Data</label>
-        <span class="main-val" id="timeToData">0.0ms</span>
+  <main>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">Cache Hits</div>
+        <div class="value green" id="statHits">-</div>
       </div>
-      <div class="insight-item">
-        <label>Source Efficiency</label>
-        <span class="sub-val up" id="efficiencyVal">+0x Faster</span>
+      <div class="stat-card">
+        <div class="label">Cache Misses</div>
+        <div class="value blue" id="statMisses">-</div>
       </div>
-      <div class="insight-item" style="margin-top: auto;">
-        <label>Current Origin</label>
-        <div id="sourceIndicator" class="source-pill">N/A</div>
+      <div class="stat-card">
+        <div class="label">Hit Rate</div>
+        <div class="value purple" id="statRate">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Active Keys</div>
+        <div class="value" id="statKeys">-</div>
       </div>
     </div>
-  </div>
 
-  <div class="action-suite">
-    <button onclick="fetchProducts()" class="primary">⚡ Execute Analysis</button>
-    <button onclick="seedDB()">🌱 Seed Schema</button>
-    <button onclick="flushCache()">🧨 Flush Cache</button>
-    <input type="text" id="searchInp" onkeyup="if(event.key==='Enter') searchProducts()" placeholder="Query collection index...">
-    <button onclick="searchProducts()">🔍 Query</button>
-  </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header">Data Actions</div>
+        <div class="panel-body">
+          <div class="btn-row">
+            <button onclick="seedDB()" class="success">Seed Database</button>
+            <button onclick="fetchProducts()">GET All Products</button>
+            <button onclick="fetchCategory('electronics')">GET Electronics</button>
+            <button onclick="fetchCategory('furniture')">GET Furniture</button>
+          </div>
+          <div class="response-bar">
+            Last response: <span class="timing" id="lastTiming">-</span> ms | Source:
+            <span id="lastSource">-</span>
+          </div>
+        </div>
+      </div>
 
-  <div class="results-grid">
-    <div class="data-feed" id="productsGrid">
-      <div style="grid-column: 1 / -1; padding: 5rem; text-align:center; color: var(--muted);">Click "Execute Analysis" to hydrate the dashboard.</div>
+      <div class="panel">
+        <div class="panel-header">Cache Controls</div>
+        <div class="panel-body">
+          <div class="btn-row">
+            <button onclick="loadStats()" class="primary">Refresh Stats</button>
+            <button onclick="flushCache()" class="danger">Flush Cache</button>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--muted); margin-top: 0.8rem;">
+            TTL: 60 seconds per key. After flushing, the next request will re-populate the cache from MongoDB.
+          </p>
+        </div>
+      </div>
     </div>
-    <div class="terminal" id="logArea">
-      <div class="terminal-line">Waiting for system call...</div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header">Request Log</div>
+        <div class="panel-body">
+          <div class="log-area" id="logArea"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">Products</div>
+        <div class="panel-body">
+          <div class="products-grid" id="productsGrid">
+            <p style="color: var(--muted); font-size: 0.85rem;">Click "GET All Products" to load data.</p>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </main>
 
   <script>
-    const API = (window.location.port === '3000' || window.location.protocol === 'file:')
-      ? 'http://localhost:5000'
-      : ''; 
+    const API = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
 
-    let chart;
-    let avgDbTime = 50;
-    const historyData = Array(30).fill(0);
-    const labels = Array(30).fill('');
-
-    function initChart() {
-      const ctx = document.getElementById('perfChart').getContext('2d');
-      const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-      gradient.addColorStop(0, 'rgba(34, 211, 238, 0.2)');
-      gradient.addColorStop(1, 'rgba(34, 211, 238, 0)');
-
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Latency (ms)',
-            data: historyData,
-            borderColor: '#22d3ee',
-            borderWidth: 3,
-            fill: true,
-            backgroundColor: gradient,
-            tension: 0.4,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { display: false },
-            y: { 
-              beginAtZero: true, 
-              grid: { color: 'rgba(255,255,255,0.05)' },
-              ticks: { color: '#64748b' }
-            }
-          }
-        }
-      });
-    }
-
-    async function handleResponse(res) {
-      const t0 = performance.now();
-      const json = await res.json();
-      const ms = parseFloat((performance.now() - t0).toFixed(1));
-      
-      updateAnalytics(json.source, ms);
-      renderGrid(json.data, json.source);
-      log(`GET ${res.url.split('/api')[1]} | ${json.source.toUpperCase()} | ${ms}ms`, json.source === 'cache' ? 'hit' : 'miss');
-      loadStats();
-    }
-
-    function updateAnalytics(source, ms) {
-      // Update Chart
-      historyData.shift();
-      historyData.push(ms);
-      chart.update('none');
-
-      // Update Digital Readout
-      document.getElementById('timeToData').textContent = ms + 'ms';
-      
-      const indicator = document.getElementById('sourceIndicator');
-      indicator.textContent = source === 'cache' ? '⚡ REDIS CACHE' : '🗄️ MONGODB ORIGIN';
-      indicator.className = `source-pill ${source}`;
-
-      const eff = document.getElementById('efficiencyVal');
-      if (source === 'database') {
-        avgDbTime = ms;
-        eff.textContent = 'Reference Speed Set';
-        eff.className = 'sub-val';
-      } else {
-        const gain = (avgDbTime / ms).toFixed(1);
-        eff.textContent = `+${gain}x Faster Offset`;
-        eff.className = 'sub-val up';
-      }
-    }
-
-    function renderGrid(products, source) {
-      const grid = document.getElementById('productsGrid');
-      grid.innerHTML = products.map(p => `
-        <div class="product-card glass">
-          <div style="font-size:0.6rem; color:var(--muted); font-weight:700; margin-bottom:0.5rem">#${p._id.slice(-6).toUpperCase()}</div>
-          <h3>${p.name}</h3>
-          <div class="price">$${p.price}</div>
-          <div class="meta">${p.category}</div>
-        </div>
-      `).join('');
-    }
-
-    function log(msg, type) {
-      const area = document.getElementById('logArea');
-      const line = document.createElement('div');
-      line.className = `terminal-line ${type}`;
+    function log(msg, type = "info") {
+      const area = document.getElementById("logArea");
+      const line = document.createElement("div");
+      line.className = `log-line ${type}`;
       line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
       area.prepend(line);
-      if(area.children.length > 30) area.lastChild.remove();
     }
 
     async function loadStats() {
       try {
         const res = await fetch(`${API}/api/cache/stats`);
         const data = await res.json();
-        document.getElementById('statHits').textContent = data.hits;
-        document.getElementById('statMisses').textContent = data.misses;
-        document.getElementById('statRate').textContent = data.hitRate;
-        document.getElementById('statKeys').textContent = data.activeKeys;
-      } catch (e) {}
+        document.getElementById("statHits").textContent = data.hits;
+        document.getElementById("statMisses").textContent = data.misses;
+        document.getElementById("statRate").textContent = data.hitRate;
+        document.getElementById("statKeys").textContent = data.activeKeys;
+        log(`Stats refreshed - Hit rate: ${data.hitRate}`, "info");
+      } catch (e) {
+        log(`Could not load stats: ${e.message}`, "err");
+      }
     }
 
-    async function fetchProducts() { try { const res = await fetch(`${API}/api/products`); handleResponse(res); } catch (e) {} }
-    async function searchProducts() { 
-      const q = document.getElementById('searchInp').value;
-      try { const res = await fetch(`${API}/api/products/search?q=${q}`); handleResponse(res); } catch (e) {} 
+    async function fetchProducts() {
+      const t0 = performance.now();
+      try {
+        const res = await fetch(`${API}/api/products`);
+        const json = await res.json();
+        const ms = (performance.now() - t0).toFixed(1);
+        document.getElementById("lastTiming").textContent = ms;
+        document.getElementById("lastSource").textContent = json.source.toUpperCase();
+        const type = json.source === "cache" ? "hit" : "miss";
+        log(`GET /api/products -> ${json.source.toUpperCase()} (${ms}ms)`, type);
+        renderProducts(json.data, json.source);
+        loadStats();
+      } catch (e) {
+        log(`Request failed: ${e.message}`, "err");
+      }
     }
-    async function seedDB() { try { const res = await fetch(`${API}/api/seed`, {method:'POST'}); const d = await res.json(); log(d.message, 'hit'); fetchProducts(); } catch (e) {} }
-    async function flushCache() { try { await fetch(`${API}/api/cache/flush`, {method:'DELETE'}); log('Cache Cleared', 'miss'); loadStats(); } catch (e) {} }
 
-    initChart();
+    async function fetchCategory(cat) {
+      const t0 = performance.now();
+      try {
+        const res = await fetch(`${API}/api/products/category/${cat}`);
+        const json = await res.json();
+        const ms = (performance.now() - t0).toFixed(1);
+        document.getElementById("lastTiming").textContent = ms;
+        document.getElementById("lastSource").textContent = json.source.toUpperCase();
+        const type = json.source === "cache" ? "hit" : "miss";
+        log(`GET /api/products/category/${cat} -> ${json.source.toUpperCase()} (${ms}ms)`, type);
+        renderProducts(json.data, json.source);
+        loadStats();
+      } catch (e) {
+        log(`Request failed: ${e.message}`, "err");
+      }
+    }
+
+    function renderProducts(products, source) {
+      const grid = document.getElementById("productsGrid");
+      if (!products.length) {
+        grid.innerHTML = '<p style="color: var(--muted)">No products found.</p>';
+        return;
+      }
+      grid.innerHTML = products
+        .map(
+          (p) => `
+      <div class="product-card">
+        <h3>${p.name}</h3>
+        <div class="price">$${p.price}</div>
+        <div class="meta">Category: ${p.category} | Stock: ${p.stock}</div>
+        <span class="badge ${source === "cache" ? "cache" : "db"}">${
+            source === "cache" ? "FROM CACHE" : "FROM DB"
+          }</span>
+      </div>
+    `
+        )
+        .join("");
+    }
+
+    async function seedDB() {
+      try {
+        const res = await fetch(`${API}/api/seed`, { method: "POST" });
+        const data = await res.json();
+        log(data.message, "info");
+      } catch (e) {
+        log(`Seed failed: ${e.message}`, "err");
+      }
+    }
+
+    async function flushCache() {
+      try {
+        await fetch(`${API}/api/cache/flush`, { method: "DELETE" });
+        log("Cache flushed - next requests will hit the database", "err");
+        loadStats();
+      } catch (e) {
+        log(`Flush failed: ${e.message}`, "err");
+      }
+    }
+
     loadStats();
+    log('Dashboard ready. Click "Seed Database" to start.', "info");
   </script>
 </body>
 </html>
