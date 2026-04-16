@@ -4,19 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CacheDemo - Distributed Cache System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d2e;
-      --card: #22263a;
-      --border: #2e3350;
-      --primary: #6366f1;
-      --accent: #22d3ee;
+      --bg: #08121f;
+      --bg2: #0e1f2d;
+      --surface: #122335;
+      --card: #162a3f;
+      --border: #27425d;
+      --primary: #f97316;
+      --accent: #2dd4bf;
       --green: #10b981;
       --red: #f43f5e;
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --font: "Segoe UI", system-ui, sans-serif;
+      --amber: #f59e0b;
+      --text: #e5edf5;
+      --muted: #86a1b8;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+      --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+      --display: "Space Grotesk", "Segoe UI", sans-serif;
     }
 
     * {
@@ -26,46 +33,93 @@
     }
 
     body {
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 10% 10%, #133a53 0%, transparent 35%),
+        radial-gradient(circle at 90% 0%, #3a2a15 0%, transparent 28%),
+        linear-gradient(160deg, var(--bg), var(--bg2));
       color: var(--text);
       font-family: var(--font);
       min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      pointer-events: none;
+      filter: blur(60px);
+      opacity: 0.25;
+    }
+
+    body::before {
+      width: 260px;
+      height: 260px;
+      top: -80px;
+      right: 8%;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    body::after {
+      width: 300px;
+      height: 300px;
+      bottom: -120px;
+      left: 2%;
+      border-radius: 50%;
+      background: var(--primary);
     }
 
     header {
-      background: var(--surface);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
       border-bottom: 1px solid var(--border);
       padding: 1rem 2rem;
       display: flex;
       align-items: center;
       gap: 1rem;
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(8px);
+      z-index: 10;
     }
 
     header h1 {
-      font-size: 1.4rem;
+      font-family: var(--display);
+      font-size: 1.42rem;
       font-weight: 700;
       color: var(--accent);
-      letter-spacing: -0.5px;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
     }
 
     header span {
       color: var(--muted);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 500;
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       background: var(--green);
-      box-shadow: 0 0 6px var(--green);
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8);
       margin-left: auto;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.offline {
+      background: var(--red);
+      box-shadow: none;
+      animation: none;
     }
 
     main {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 2rem 1.4rem 2.6rem;
       display: grid;
       gap: 1.5rem;
     }
@@ -77,10 +131,30 @@
     }
 
     .stat-card {
-      background: var(--card);
+      background: linear-gradient(145deg, #18334b, var(--card));
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 1.2rem;
+      position: relative;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: 12px 12px 0 0;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.8;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
     }
 
     .stat-card .label {
@@ -92,8 +166,10 @@
     }
 
     .stat-card .value {
+      font-family: var(--display);
       font-size: 2rem;
       font-weight: 700;
+      letter-spacing: -0.02em;
     }
 
     .stat-card .value.green { color: var(--green); }
@@ -101,14 +177,15 @@
     .stat-card .value.purple { color: var(--primary); }
 
     .panel {
-      background: var(--card);
+      background: linear-gradient(160deg, #16314a, var(--card));
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
+      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.24);
     }
 
     .panel-header {
-      background: var(--surface);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
       padding: 1rem 1.5rem;
       font-weight: 600;
       font-size: 0.95rem;
@@ -116,6 +193,10 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.78rem;
+      color: var(--muted);
     }
 
     .panel-body {
@@ -129,55 +210,62 @@
     }
 
     button {
-      padding: 0.55rem 1.1rem;
+      padding: 0.62rem 1.1rem;
       border-radius: 8px;
       border: 1px solid var(--border);
-      background: var(--surface);
+      background: color-mix(in srgb, var(--surface) 90%, #0a1625);
       color: var(--text);
       font-size: 0.85rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
     button:hover {
-      background: var(--primary);
-      border-color: var(--primary);
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
     }
 
     button.primary {
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #fb923c);
       border-color: var(--primary);
       font-weight: 600;
+      color: #fffaf4;
     }
 
     button.danger {
-      background: var(--red);
+      background: linear-gradient(135deg, var(--red), #be123c);
       border-color: var(--red);
+      color: #fff7f8;
     }
 
     button.success {
-      background: var(--green);
+      background: linear-gradient(135deg, var(--green), #059669);
       border-color: var(--green);
+      color: #f4fffb;
     }
 
     .log-area {
-      background: #0a0c14;
+      background: #091421;
       border-radius: 8px;
       padding: 1rem;
-      font-family: "Courier New", monospace;
+      font-family: var(--mono);
       font-size: 0.82rem;
       height: 220px;
       overflow-y: auto;
       border: 1px solid var(--border);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
     }
 
     .log-line {
-      padding: 2px 0;
-      border-bottom: 1px solid #1a1d2e;
+      padding: 0.35rem 0.2rem;
+      border-bottom: 1px dashed #1f3248;
+      animation: slideIn 0.25s ease;
     }
 
     .log-line.hit { color: var(--green); }
-    .log-line.miss { color: #f59e0b; }
+    .log-line.miss { color: var(--amber); }
     .log-line.info { color: var(--accent); }
     .log-line.err { color: var(--red); }
 
@@ -192,6 +280,13 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 1rem;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
     }
 
     .product-card h3 {
@@ -200,6 +295,7 @@
     }
 
     .product-card .price {
+      font-family: var(--display);
       font-size: 1.3rem;
       font-weight: 700;
       color: var(--accent);
@@ -213,11 +309,12 @@
 
     .badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 20px;
       font-size: 0.7rem;
       font-weight: 600;
       margin-top: 0.4rem;
+      letter-spacing: 0.03em;
     }
 
     .badge.cache {
@@ -237,11 +334,73 @@
       font-size: 0.8rem;
       color: var(--muted);
       margin-top: 0.8rem;
+      flex-wrap: wrap;
     }
 
     .timing {
+      font-family: var(--mono);
       font-weight: 700;
       color: var(--text);
+    }
+
+    .source-chip {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 0.12rem 0.55rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .source-chip.cache {
+      color: var(--green);
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    .source-chip.db {
+      color: var(--accent);
+      background: rgba(45, 212, 191, 0.14);
+      border-color: rgba(45, 212, 191, 0.35);
+    }
+
+    .intro-reveal {
+      animation: riseIn 0.45s ease both;
+    }
+
+    .delay-1 { animation-delay: 0.06s; }
+    .delay-2 { animation-delay: 0.12s; }
+    .delay-3 { animation-delay: 0.18s; }
+    .delay-4 { animation-delay: 0.24s; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
 
     .two-col {
@@ -251,6 +410,15 @@
     }
 
     @media (max-width: 700px) {
+      header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .status-dot {
+        margin-left: 0;
+      }
+
       .two-col {
         grid-template-columns: 1fr;
       }
@@ -270,26 +438,26 @@
 
   <main>
     <div class="stats-row">
-      <div class="stat-card">
+      <div class="stat-card intro-reveal delay-1">
         <div class="label">Cache Hits</div>
         <div class="value green" id="statHits">-</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card intro-reveal delay-2">
         <div class="label">Cache Misses</div>
         <div class="value blue" id="statMisses">-</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card intro-reveal delay-3">
         <div class="label">Hit Rate</div>
         <div class="value purple" id="statRate">-</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card intro-reveal delay-4">
         <div class="label">Active Keys</div>
         <div class="value" id="statKeys">-</div>
       </div>
     </div>
 
     <div class="two-col">
-      <div class="panel">
+      <div class="panel intro-reveal delay-2">
         <div class="panel-header">Data Actions</div>
         <div class="panel-body">
           <div class="btn-row">
@@ -300,12 +468,12 @@
           </div>
           <div class="response-bar">
             Last response: <span class="timing" id="lastTiming">-</span> ms | Source:
-            <span id="lastSource">-</span>
+            <span id="lastSource" class="source-chip db">N/A</span>
           </div>
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel intro-reveal delay-3">
         <div class="panel-header">Cache Controls</div>
         <div class="panel-body">
           <div class="btn-row">
@@ -320,14 +488,14 @@
     </div>
 
     <div class="two-col">
-      <div class="panel">
+      <div class="panel intro-reveal delay-3">
         <div class="panel-header">Request Log</div>
         <div class="panel-body">
           <div class="log-area" id="logArea"></div>
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel intro-reveal delay-4">
         <div class="panel-header">Products</div>
         <div class="panel-body">
           <div class="products-grid" id="productsGrid">
@@ -341,24 +509,40 @@
   <script>
     const API = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
 
+    function setStatus(ok) {
+      document.getElementById("statusDot").classList.toggle("offline", !ok);
+    }
+
+    function setLastSource(source) {
+      const el = document.getElementById("lastSource");
+      const isCache = source === "cache";
+      el.textContent = isCache ? "CACHE" : "DATABASE";
+      el.className = `source-chip ${isCache ? "cache" : "db"}`;
+    }
+
     function log(msg, type = "info") {
       const area = document.getElementById("logArea");
       const line = document.createElement("div");
       line.className = `log-line ${type}`;
       line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
       area.prepend(line);
+      if (area.children.length > 80) {
+        area.removeChild(area.lastElementChild);
+      }
     }
 
     async function loadStats() {
       try {
         const res = await fetch(`${API}/api/cache/stats`);
         const data = await res.json();
+        setStatus(true);
         document.getElementById("statHits").textContent = data.hits;
         document.getElementById("statMisses").textContent = data.misses;
         document.getElementById("statRate").textContent = data.hitRate;
         document.getElementById("statKeys").textContent = data.activeKeys;
         log(`Stats refreshed - Hit rate: ${data.hitRate}`, "info");
       } catch (e) {
+        setStatus(false);
         log(`Could not load stats: ${e.message}`, "err");
       }
     }
@@ -370,7 +554,7 @@
         const json = await res.json();
         const ms = (performance.now() - t0).toFixed(1);
         document.getElementById("lastTiming").textContent = ms;
-        document.getElementById("lastSource").textContent = json.source.toUpperCase();
+        setLastSource(json.source);
         const type = json.source === "cache" ? "hit" : "miss";
         log(`GET /api/products -> ${json.source.toUpperCase()} (${ms}ms)`, type);
         renderProducts(json.data, json.source);
@@ -387,7 +571,7 @@
         const json = await res.json();
         const ms = (performance.now() - t0).toFixed(1);
         document.getElementById("lastTiming").textContent = ms;
-        document.getElementById("lastSource").textContent = json.source.toUpperCase();
+        setLastSource(json.source);
         const type = json.source === "cache" ? "hit" : "miss";
         log(`GET /api/products/category/${cat} -> ${json.source.toUpperCase()} (${ms}ms)`, type);
         renderProducts(json.data, json.source);
