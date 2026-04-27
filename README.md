@@ -4,6 +4,30 @@ A high-performance **Cloud Computing** demonstration project using **Node.js (Ex
 
 ---
 
+## 🌐 Live Demo
+
+| Service | URL | Status |
+|---------|-----|--------|
+| 🖥️ Frontend Dashboard | [https://cloudcache-frontend.onrender.com](https://cloudcache-frontend.onrender.com) | ![Live](https://img.shields.io/badge/status-live-brightgreen) |
+| ⚙️ Backend API | [https://cloudcache-backend.onrender.com](https://cloudcache-backend.onrender.com) | ![Live](https://img.shields.io/badge/status-live-brightgreen) |
+| 🩺 Health Check | [https://cloudcache-backend.onrender.com/health](https://cloudcache-backend.onrender.com/health) | ![Live](https://img.shields.io/badge/status-live-brightgreen) |
+| 📊 Cache Stats | [https://cloudcache-backend.onrender.com/api/cache/stats](https://cloudcache-backend.onrender.com/api/cache/stats) | ![Live](https://img.shields.io/badge/status-live-brightgreen) |
+
+> ⚠️ **Note:** Hosted on Render free tier — the backend may take ~30 seconds to wake up after inactivity. Visit the health check link first to wake it up before the demo.
+
+---
+
+## ☁️ Cloud Infrastructure
+
+| Layer | Service | Plan | Region |
+|-------|---------|------|--------|
+| 🖥️ Frontend | Render Static/Web Service | Free | AWS eu-central (Frankfurt) |
+| ⚙️ Backend | Render Web Service (Node.js) | Free | AWS eu-central (Frankfurt) |
+| 🗄️ Database | MongoDB Atlas | M0 Free Tier | AWS eu-west-3 (Paris) |
+| ⚡ Cache | Upstash Redis | Serverless Free | AWS eu-central-1 (Frankfurt) |
+
+---
+
 ## 🚀 Modern Development Workflow (Hot-Reload)
 
 This project is optimized for an elite developer experience. You can modify code in real-time without ever restarting your containers.
@@ -77,13 +101,19 @@ graph TD
 
 ---
 
-## ☁️ Deployment (Cloud Ready)
+## 🚀 Deploy Your Own Instance
 
-The project is structured for easy deployment on platforms like **Render**, **Railway**, or **AWS ECS**.
-
-1. **Database**: Use MongoDB Atlas (Free Tier).
-2. **Cache**: Use Upstash Redis (Serverless).
-3. **App**: Set `MONGO_URI` and `REDIS_URL` as environment variables.
+1. **MongoDB Atlas** → Create free M0 cluster → copy connection string
+2. **Upstash** → Create free Redis DB → copy Redis URL
+3. **Render (Backend)** → New Web Service → Root: `backend` → Start: `node server.js` → add env vars:
+   ```
+   MONGO_URI=mongodb+srv://...
+   REDIS_URL=rediss://...
+   PORT=10000
+   ```
+4. **Render (Frontend)** → New Web Service → Root: `frontend` → Runtime: Docker → Port: `8080`
+5. Update `const API` in `frontend/index.html` with your backend URL
 
 ---
+
 *Created for Cloud Computing Case Studies — Performance Optimization via Distributed Memory.*
