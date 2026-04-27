@@ -507,7 +507,7 @@
   </main>
 
   <script>
-    const API = window.location.hostname === "localhost" ? "http://localhost:5000" : "";
+    const API = window.location.hostname === "localhost" ? "http://localhost:5000" : "https://cloudcache-backend.onrender.com";
 
     function setStatus(ok) {
       document.getElementById("statusDot").classList.toggle("offline", !ok);
